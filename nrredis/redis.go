@@ -3,16 +3,12 @@ package nrredis
 import (
 	"strings"
 
-	newrelic "github.com/newrelic/go-agent"
+	"github.com/newrelic/go-agent/v3/newrelic"
 	redis "gopkg.in/redis.v5"
 )
 
 // WrapRedisClient adds newrelic measurements for commands and returns cloned client
 func WrapRedisClient(txn newrelic.Transaction, c *redis.Client) *redis.Client {
-	if txn == nil {
-		return c
-	}
-
 	// clone using context
 	ctx := c.Context()
 	copy := c.WithContext(ctx)
@@ -28,13 +24,13 @@ func WrapRedisClient(txn newrelic.Transaction, c *redis.Client) *redis.Client {
 }
 
 type segment interface {
-	End() error
+	End()
 }
 
 // create segment through function to be able to test it
 var segmentBuilder = func(txn newrelic.Transaction, product newrelic.DatastoreProduct, operation string) segment {
 	return &newrelic.DatastoreSegment{
-		StartTime: newrelic.StartSegmentNow(txn),
+		StartTime: txn.StartSegmentNow(),
 		Product:   product,
 		Operation: operation,
 	}

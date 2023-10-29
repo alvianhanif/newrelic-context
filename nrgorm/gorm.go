@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/jinzhu/gorm"
-	newrelic "github.com/newrelic/go-agent"
+	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
 const (
@@ -15,9 +15,6 @@ const (
 
 // SetTxnToGorm sets transaction to gorm settings, returns cloned DB
 func SetTxnToGorm(txn newrelic.Transaction, db *gorm.DB) *gorm.DB {
-	if txn == nil {
-		return db
-	}
 	return db.Set(txnGormKey, txn)
 }
 
@@ -70,7 +67,8 @@ func (c *callbacks) before(scope *gorm.Scope) {
 	if !ok {
 		return
 	}
-	scope.Set(startTimeKey, newrelic.StartSegmentNow(txn.(newrelic.Transaction)))
+	ttxn := txn.(newrelic.Transaction)
+	scope.Set(startTimeKey, ttxn.StartSegmentNow())
 }
 
 func (c *callbacks) after(scope *gorm.Scope, operation string) {
@@ -96,7 +94,8 @@ func (c *callbacks) after(scope *gorm.Scope, operation string) {
 		return
 	}
 	txn, _ := scope.Get(txnGormKey)
-	scope.Set(startTimeKey, newrelic.StartSegmentNow(txn.(newrelic.Transaction)))
+	ttxn := txn.(newrelic.Transaction)
+	scope.Set(startTimeKey, ttxn.StartSegmentNow())
 }
 
 func (c *callbacks) commitOrRollback(scope *gorm.Scope) {
@@ -148,7 +147,7 @@ func registerCallbacks(db *gorm.DB, name string, c *callbacks) {
 }
 
 type segment interface {
-	End() error
+	End()
 }
 
 // create segment through function to be able to test it

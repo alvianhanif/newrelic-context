@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/jinzhu/gorm"
-	"github.com/newrelic/go-agent"
+	"github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/smacker/newrelic-context/nrgorm"
 	"github.com/smacker/newrelic-context/nrredis"
 	redis "gopkg.in/redis.v5"
@@ -21,10 +21,8 @@ func ContextWithTxn(c context.Context, txn newrelic.Transaction) context.Context
 
 // Get NewRelic transaction from context anywhere
 func GetTnxFromContext(c context.Context) newrelic.Transaction {
-	if tnx := c.Value(txnKey); tnx != nil {
-		return tnx.(newrelic.Transaction)
-	}
-	return nil
+	tnx := c.Value(txnKey)
+	return tnx.(newrelic.Transaction)
 }
 
 // Sets transaction from Context to gorm settings, returns cloned DB
